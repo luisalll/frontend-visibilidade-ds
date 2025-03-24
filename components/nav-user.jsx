@@ -1,5 +1,4 @@
-import { LogOut, Settings, User } from "lucide-react"
-
+import { LogOut, User } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   DropdownMenu,
@@ -11,12 +10,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar"
+import { useRouter } from "next/navigation";
 
-export function NavUser({
-  user = { name: "Usuário", email: "usuario@exemplo.com", avatar: "" },
-}) {
+export function NavUser({ user }) {
+  const router = useRouter();
+
   const handleLogout = () => {
     localStorage.removeItem("user_email");
+    localStorage.removeItem("user_name");
     window.location.href = "/login";
   };
 
@@ -38,13 +39,6 @@ export function NavUser({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-56">
             <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem className="cursor-pointer">
-                <User className="mr-2 size-4" />
-                <span>Perfil</span>
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem className="cursor-pointer" onClick={handleLogout}>
               <LogOut className="mr-2 size-4" />

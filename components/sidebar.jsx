@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { LayoutDashboard, BookOpen, Image, HelpCircle } from "lucide-react";
 import { Command } from "lucide-react";
 
@@ -20,11 +20,6 @@ import {
 import { NavUser } from "@/components/nav-user";
 
 const sidebarItems = {
-    user_data: {
-        name: "cainho",
-        email: "cainho@gmail.com",
-        avatar: "/avatars/shadcn.png",
-    },
     items: [
         {
             label: "Página Inicial",
@@ -55,12 +50,17 @@ const sidebarItems = {
 
 export function AppSidebar({ ...props }) {
   const pathname = usePathname();
-  const router = useRouter();
   const [displayNone, setDisplayNone] = useState(false);
 
+  const userData = {
+    name: localStorage.getItem("user_name"),
+    email: localStorage.getItem("user_email"),
+    id: localStorage.getItem("user_id"),
+    avatar: "/avatars/shadcn.png",
+  }
+
   useEffect(() => {
-    const userEmail = localStorage.getItem("user_email");
-    setDisplayNone(!userEmail || pathname === "/login");
+    setDisplayNone(pathname === "/login");
   }, [pathname]);
 
   if (displayNone) {
@@ -93,9 +93,9 @@ export function AppSidebar({ ...props }) {
             {sidebarItems.items.map((item) => (
                 <SidebarMenuItem key={item.href} className="mt-2">
                   <Link href={item.href}>
-                    <SidebarMenuButton 
-                      isActive={pathname === item.href} 
-                      tooltip={item.label} 
+                    <SidebarMenuButton
+                      isActive={pathname === item.href}
+                      tooltip={item.label}
                       className="cursor-pointer px-4 py-6"
                     >
                         <item.icon className="size-4 mr-2" />
@@ -110,7 +110,7 @@ export function AppSidebar({ ...props }) {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <NavUser user={sidebarItems.user_data} />
+            <NavUser user={userData} />
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>

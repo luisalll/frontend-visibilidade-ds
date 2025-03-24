@@ -21,16 +21,54 @@ const geistMono = Geist_Mono({
 export default function RootLayout({ children }) {
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const userEmail = localStorage.getItem("user_email");
-    if (!userEmail) {
-      router.push('/login');
-      setIsAuthenticated(false);
-    } else {
-      setIsAuthenticated(true);
+    const checkAuthentication = () => {
+      try {
+        const userEmail = localStorage.getItem("user_email");
+
+        if (!userEmail) {
+          router.push("/login");
+          setIsAuthenticated(false);
+        } else {
+          setIsAuthenticated(true);
+        }
+      } catch (error) {
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (typeof window !== "undefined") {
+      checkAuthentication();
+
+      window.addEventListener("storage", checkAuthentication);
+
+      window.addEventListener("loginStateChange", checkAuthentication);
     }
+
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener("storage", checkAuthentication);
+        window.removeEventListener("loginStateChange", checkAuthentication);
+      }
+    };
   }, [router]);
+
+  if (isLoading) {
+    return (
+      <html lang="en">
+        <body
+          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        >
+          <div className="flex-1 flex items-center justify-center min-h-screen">
+            Carregando...
+          </div>
+        </body>
+      </html>
+    );
+  }
 
   if (!isAuthenticated) {
     return (

@@ -17,16 +17,30 @@ import { Separator } from "@/components/ui/separator"
 import { useSidebar } from "@/components/ui/sidebar"
 
 export default function Header() {
-  const { toggleSidebar } = useSidebar()
-  const [isDarkMode, setIsDarkMode] = useState(false)
-  const pathname = usePathname()
+  const { toggleSidebar } = useSidebar();
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const pathname = usePathname();
   const [displayNone, setDisplayNone] = useState(false);
+
   const getPageTitle = () => {
     const nameByPath = {
       "/dashboard": "Página inicial",
       "/postagens": "Postagens",
       "/agendamento": "Agendamento",
     }
+
+    if (pathname.startsWith("/postagens/template/")) {
+      return "Editar Template";
+    }
+
+    if (pathname.startsWith("/postagens/editar/")) {
+      return "Editar Post";
+    }
+
+    if (pathname.startsWith("/agendamento/")) {
+      return "Agendamento";
+    }
+
     return nameByPath[pathname] || pathname.split("/").pop().charAt(0).toUpperCase() + pathname.split("/").pop().slice(1)
   }
 
@@ -41,7 +55,7 @@ export default function Header() {
 
     const userEmail = localStorage.getItem("user_email");
     setDisplayNone(!userEmail || pathname === "/login");
-  }, [])
+  }, [pathname])
 
   const toggleDarkMode = () => {
     if (isDarkMode) {

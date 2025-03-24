@@ -1,7 +1,6 @@
-const apiUrl = `${process.env.API_URL}/apigov`;
+const apiUrl = `${process.env.API_URL}/usergov`;
 
 export const authenticate = async (email, password) => {
-
   const response = await fetch(apiUrl, {
     method: "POST",
     headers: {

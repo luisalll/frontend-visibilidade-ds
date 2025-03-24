@@ -25,7 +25,10 @@ export default function Login() {
       const response = await authenticate(email, password);
 
       if (response.success) {
-        localStorage.setItem("user_email", email);
+        localStorage.setItem("user_email", response.data.user.email);
+        localStorage.setItem("user_name", response.data.user.name);
+        localStorage.setItem("user_id", response.data._id);
+        window.dispatchEvent(new Event("loginStateChange"));
         router.push("/dashboard");
       } else {
         setError(response.message || "Falha na autenticação. Verifique suas credenciais.");

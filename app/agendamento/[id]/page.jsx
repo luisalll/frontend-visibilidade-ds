@@ -6,7 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import {
   Select,
   SelectContent,
@@ -24,14 +23,25 @@ import { CalendarIcon, Clock, Copy, Loader2 } from "lucide-react"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { cn } from "@/lib/utils"
-import { toast } from "sonner";
+import { toast, Toaster } from "sonner";
+import { generateText } from "../.././../api/gemini";
+import { useRouter, useSearchParams } from 'next/navigation';
+import { createPost } from "@/api/schedule";
 
-export default function Agendamento() {
+export default function Agendamento({ params }) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const imagePath = searchParams.get('imagePath');
   const [date, setDate] = useState(null);
   const [time, setTime] = useState(null);
   const [caption, setCaption] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedCaption, setGeneratedCaption] = useState("");
+  const [description, setDescription] = useState("");
+  const [title, setTitle] = useState("");
+  const [selectedSocialMedia, setSelectedSocialMedia] = useState("");
+  const [isDateOpen, setIsDateOpen] = useState(false);
+  const [isTimeOpen, setIsTimeOpen] = useState(false);
   const timeOptions = Array.from({ length: 24 }, (_, i) => {
     const hours = i.toString().padStart(2, '0')
     const minutes = '00'
@@ -40,13 +50,20 @@ export default function Agendamento() {
 
   const handleTimeSelect = (selectedTime) => {
     setTime(selectedTime)
+    setIsTimeOpen(false)
+  }
+
+  const handleDateSelect = (selectedDate) => {
+    setDate(selectedDate)
+    setIsDateOpen(false)
   }
 
   const generateCaption = async () => {
     setIsGenerating(true);
     try {
       const generatedCaption = await generateText(description);
-      setGeneratedCaption(generatedCaption.text.replace(/<[^>]*>?/g, '').replace(/\*/g, ''));
+      console.log(generatedCaption, 'generatedCaption');
+      setGeneratedCaption(generatedCaption.data.replace(/<[^>]>?/g, '').replace(/\*/g, ''));
     } catch (error) {
       console.error("Erro ao gerar texto:", error);
     } finally {
@@ -66,8 +83,37 @@ export default function Agendamento() {
     }
   }
 
+  const handleSchedulePost = async () => {
+    const post = {
+      postTitle: title,
+      postText: caption,
+      postDate: date.toISOString(),
+      postTime: time,
+      platform: selectedSocialMedia,
+      imagePath: imagePath,
+    }
+
+    const userId = localStorage.getItem('user_id');
+
+    try {
+      const response = await createPost(userId, post);
+      if (response && response.success) {
+        toast.success('Postagem agendada com sucesso!');
+        setTimeout(() => {
+          router.push('/postagens');
+        }, 1500);
+      } else {
+        toast.error('Erro ao agendar postagem. Tente novamente.');
+      }
+    } catch (error) {
+      console.error("Erro ao agendar postagem:", error);
+      toast.error('Erro ao agendar postagem. Tente novamente.');
+    }
+  }
+
   return (
     <div className="w-[calc(100vw-300px)] p-6 md:p-10 flex flex-col gap-6">
+      <Toaster position="top-right" />
       <h1 className="text-3xl font-bold mb-6">Agendar Postagem</h1>
 
       <div className="flex gap-6">
@@ -82,7 +128,7 @@ export default function Agendamento() {
                 <Label htmlFor="date">
                   Data de publicação <span className="text-red-500">*</span>
                 </Label>
-                <Popover>
+                <Popover open={isDateOpen} onOpenChange={setIsDateOpen}>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
@@ -99,7 +145,7 @@ export default function Agendamento() {
                     <Calendar
                       mode="single"
                       selected={date}
-                      onSelect={setDate}
+                      onSelect={handleDateSelect}
                       initialFocus
                       locale={ptBR}
                     />
@@ -111,7 +157,7 @@ export default function Agendamento() {
                 <Label htmlFor="time">
                   Horário <span className="text-red-500">*</span>
                 </Label>
-                <Popover>
+                <Popover open={isTimeOpen} onOpenChange={setIsTimeOpen}>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
@@ -146,16 +192,16 @@ export default function Agendamento() {
 
               <div className="space-y-2">
                 <Label htmlFor="socialMedia">Redes Sociais</Label>
-                <Select>
+                <Select onValueChange={setSelectedSocialMedia}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione as redes sociais..." />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
-                      <SelectItem value="facebook">Facebook</SelectItem>
-                      <SelectItem value="instagram">Instagram</SelectItem>
-                      <SelectItem value="twitter">Twitter</SelectItem>
-                      <SelectItem value="linkedin">LinkedIn</SelectItem>
+                      <SelectItem value="Facebook">Facebook</SelectItem>
+                      <SelectItem value="Instagram">Instagram</SelectItem>
+                      <SelectItem value="Twitter">Twitter</SelectItem>
+                      <SelectItem value="LinkedIn">LinkedIn</SelectItem>
                     </SelectGroup>
                   </SelectContent>
                 </Select>
@@ -165,41 +211,6 @@ export default function Agendamento() {
         </Card>
 
         <Card className="w-full">
-          <CardHeader>
-            <CardTitle>Conteúdo da Postagem</CardTitle>
-            <CardDescription>Adicione os detalhes da sua postagem</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="title">Título da postagem</Label>
-                <Input
-                  id="title"
-                  placeholder="Digite o título da postagem"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="description">Legenda da postagem</Label>
-                <Textarea
-                  id="caption"
-                  placeholder="Legenda..."
-                  value={caption}
-                  onChange={(e) => setCaption(e.target.value)}
-                  className="min-h-[150px]"
-                />
-              </div>
-
-              <Button className="w-full">
-                Agendar Postagem
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="flex gap-6">
-      <Card className="w-full">
           <CardHeader>
             <CardTitle>Em dúvida com a legenda?</CardTitle>
             <CardDescription>Nossa IA vai te ajudar a criar uma legenda perfeita para sua postagem</CardDescription>
@@ -211,6 +222,8 @@ export default function Agendamento() {
                 <Input
                   id="title"
                   placeholder="Descreva brevemente sua postagem"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
                 />
               </div>
 
@@ -231,12 +244,12 @@ export default function Agendamento() {
                 <label htmlFor="generatedCaption" className="block text-sm font-medium mb-2">
                   Texto gerado
                 </label>
-                <Textarea
+                <textarea
                   id="generatedCaption"
                   placeholder="Texto..."
                   value={generatedCaption}
                   onChange={(e) => setGeneratedCaption(e.target.value)}
-                  className="min-h-[150px]"
+                  className="min-h-[150px] resize w-full border-[1px] border-gray-300 rounded-md p-2 outline-none"
                 />
                 {generatedCaption && (
                   <Button
@@ -253,6 +266,43 @@ export default function Agendamento() {
             </div>
           </CardContent>
         </Card>
+      </div>
+
+      <div className="flex gap-6">
+        <Card className="w-full">
+            <CardHeader>
+              <CardTitle>Conteúdo da Postagem</CardTitle>
+              <CardDescription>Adicione os detalhes da sua postagem</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="title">Título da postagem</Label>
+                  <Input
+                    id="title"
+                    placeholder="Digite o título da postagem"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="description">Legenda da postagem</Label>
+                  <textarea
+                  id="description"
+                  placeholder="Legenda..."
+                  value={caption}
+                  onChange={(e) => setCaption(e.target.value)}
+                  className="min-h-[150px] resize w-full border-[1px] border-gray-300 rounded-md p-2 outline-none"
+                />
+                </div>
+
+                <Button className="w-full cursor-pointer" onClick={handleSchedulePost}>
+                  Agendar Postagem
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
       </div>
     </div>
   )
