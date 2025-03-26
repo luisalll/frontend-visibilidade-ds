@@ -13,7 +13,6 @@ import { use } from "react";
 
 export default function TemplateEditPage({ params }) {
   const router = useRouter();
-  const [templateName, setTemplateName] = useState("");
   const [description, setDescription] = useState("");
   const [caption, setCaption] = useState("");
   const [color, setColor] = useState("#ffffff");

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { getTemplates } from "@/api/template";
-import { getSchedule } from "@/api/schedule";
+import { getUserSchedule } from "@/api/schedule";
 import { Pencil } from "lucide-react";
 
 export default function Postagens() {
@@ -34,7 +34,7 @@ export default function Postagens() {
     setLoadingScheduled(true);
     try {
       const userId = localStorage.getItem('user_id');
-      const scheduledPosts = await getSchedule(userId);
+      const scheduledPosts = await getUserSchedule(userId);
 
       if (scheduledPosts.data.posts) {
         setScheduledPosts(scheduledPosts.data.posts);
